@@ -1,0 +1,15 @@
+[package]
+name = "easy-csv"
+version = "0.1.1"
+authors = ["Tyler Hardin <th020394@gmail.com>"]
+
+description = "Easily parse structs from CSVs."
+license = "BSD-2-Clause"
+repository = "https://github.com/Tyler-Hardin/easy-csv"
+
+[lib]
+name = "easy_csv"
+
+[dependencies]
+easy-csv-derive = "0.1.0"
+csv = "0.14"
