@@ -28,9 +28,9 @@ fn impl_easy_csv(ast: &syn::MacroInput) -> quote::Tokens {
         syn::Body::Enum(_) => panic!("#[derive(CSVParsable)] can only be used with structs"),
     };
 
-	let mut header_parser = Vec::new();
-	let mut row_parser = Vec::new();
-	for (idx, field) in fields.iter().enumerate() {
+    let mut header_parser = Vec::new();
+    let mut row_parser = Vec::new();
+    for (idx, field) in fields.iter().enumerate() {
         let name = field.ident.clone().expect("Fields must be named");
         header_parser.push({
             quote! {
@@ -53,7 +53,7 @@ fn impl_easy_csv(ast: &syn::MacroInput) -> quote::Tokens {
         });
 
 
-		row_parser.push({
+        row_parser.push({
             let ty = field.ty.clone();
             quote! {
                 #name : match record[col_indices[#idx]].parse::<#ty>() {
@@ -67,18 +67,18 @@ fn impl_easy_csv(ast: &syn::MacroInput) -> quote::Tokens {
                 }
             }
         });
-	}
+    }
 
-	let (impl_generics, ty_generics, where_clause) = ast.generics.split_for_impl();
+    let (impl_generics, ty_generics, where_clause) = ast.generics.split_for_impl();
 
     quote! {
         impl #impl_generics CSVParsable<#name> for #name #ty_generics #where_clause {
-			fn parse_header<R: std::io::Read>(
+            fn parse_header<R: std::io::Read>(
                 reader: &mut csv::Reader<R>) -> Result<Vec<usize>, ::Error> {
                 let mut column_indices = vec![];
                 #(#header_parser)*
                 Ok(column_indices)
-			}
+            }
 
             fn parse_row<R: std::io::Read>(
                 records: &mut std::iter::Enumerate<csv::StringRecords<R>>,
