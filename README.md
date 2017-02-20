@@ -1,25 +1,33 @@
-easy-csv
-===========
+### Intro
 
-Add a custom derive to a struct to make it immediately parsable from CSVs. The
-derive adds a method `parse_csv` which takes a `csv::Reader` and returns a
-`Vec<T>` where `T` is your type. The backend will ignore extra columns as
-necessary, and only requires that the columns which have fields in your struct
-exist. The String::parse<> functions are used to parse CSV fields to the
-datatype of the field in your struct.
+Add a custom derive to a struct to make it parsable from CSVs. The derive
+makes it possible to construct a CSVIterator over your type. The backend will
+ignore extra columns as necessary, and only requires that the columns which
+have fields in your struct exist. The String::parse<> functions are used to
+parse CSV fields to the datatype of the field in your struct.
 
-Usage example:
+### Installation
+
+```toml
+[dependencies]
+easy-csv = "0.2.0"
+easy-csv-derive = "0.2.0"
+csv = "0.14.0"
+```
+
+`csv` is a sibling dependency because you have to create the `csv::Reader` yourself.
+
+### Usage example
 
 ```rust
-#[macro_use]
 extern crate easy_csv;
 #[macro_use]
 extern crate easy_csv_derive;
 extern crate csv;
 
-use easy_csv::EasyCSV;
+use easy_csv::{CSVIterator,CSVParsable};
 
-#[derive(Debug,EasyCSV)]
+#[derive(Debug,CSVParsable)]
 struct Record {
     a : i32,
     b : i8,
@@ -32,9 +40,10 @@ a,b,c,d
 2,-3,foo,bar";
 
     let mut rdr = csv::Reader::from_string(data);
-    let res = Record::parse_csv(&mut rdr);
+    let iter = CSVIterator::<Record,_>::new(&mut rdr);
+    let res : Vec<Record> = iter.collect();
     println!("{:?}", res);
 }
 ```
 
-Will print `[Record { a: 2, b: -3, d: "bar" }]`
+Output: `[Record { a: 2, b: -3, d: "bar" }]`
