@@ -44,7 +44,7 @@ fn impl_easy_csv(ast: &syn::MacroInput) -> quote::Tokens {
                 let index = match index {
                     Some(index) => index,
                     None => {
-                        return Err(::Error::MissingColumnError(
+                        return Err(easy_csv::Error::MissingColumnError(
                             format!("Column \"{}\" not found", stringify!(#name))));
                     }
                 };
@@ -56,13 +56,16 @@ fn impl_easy_csv(ast: &syn::MacroInput) -> quote::Tokens {
         row_parser.push({
             let ty = field.ty.clone();
             quote! {
-                #name : match record[col_indices[#idx]].parse::<#ty>() {
-                    Ok(v) => v,
-                    Err(_) => {
-                        return Some(Err(::Error::ParseError(
-                            format!("Error parsing column \"{}\" on row {}",
-                                stringify!(#name),
-                                row))));
+                #name : {
+                    #[allow(unreachable_patterns)]
+                    match record[col_indices[#idx]].parse::<#ty>() {
+                        Ok(v) => v,
+                        Err(_) => {
+                            return Some(Err(easy_csv::Error::ParseError(
+                                format!("Error parsing column \"{}\" on row {}",
+                                    stringify!(#name),
+                                    row))));
+                        }
                     }
                 }
             }
@@ -72,9 +75,9 @@ fn impl_easy_csv(ast: &syn::MacroInput) -> quote::Tokens {
     let (impl_generics, ty_generics, where_clause) = ast.generics.split_for_impl();
 
     quote! {
-        impl #impl_generics CSVParsable<#name> for #name #ty_generics #where_clause {
+        impl #impl_generics easy_csv::CSVParsable<#name> for #name #ty_generics #where_clause {
             fn parse_header<R: std::io::Read>(
-                reader: &mut csv::Reader<R>) -> Result<Vec<usize>, ::Error> {
+                reader: &mut csv::Reader<R>) -> Result<Vec<usize>, easy_csv::Error> {
                 let mut column_indices = vec![];
                 #(#header_parser)*
                 Ok(column_indices)
@@ -82,13 +85,12 @@ fn impl_easy_csv(ast: &syn::MacroInput) -> quote::Tokens {
 
             fn parse_row<R: std::io::Read>(
                 records: &mut std::iter::Enumerate<csv::StringRecords<R>>,
-                col_indices: &Vec<usize>) -> Option<Result<#name,::Error>> {
-                let record = records.next();
-                match record {
+                col_indices: &Vec<usize>) -> Option<Result<#name,easy_csv::Error>> {
+                match records.next() {
                     Some((row, record)) => {
                         match record {
                             Ok(record) => Some(Ok(#name { #(#row_parser),* })),
-                            Err(e) => Some(Err(::Error::CSVError(e)))
+                            Err(e) => Some(Err(easy_csv::Error::CSVError(e)))
                         }
                     }
                     None => None

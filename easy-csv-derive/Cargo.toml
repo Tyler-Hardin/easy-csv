@@ -1,6 +1,6 @@
 [package]
 name = "easy-csv-derive"
-version = "0.3.0"
+version = "0.3.2"
 authors = ["Tyler Hardin <th020394@gmail.com>"]
 
 description = "Procedural macro crate for easy-csv."
@@ -12,6 +12,6 @@ name = "easy_csv_derive"
 proc-macro = true
 
 [dependencies]
-syn = "0.11.4"
-quote = "0.3.12"
+syn = "0.11"
+quote = "0.3"
 

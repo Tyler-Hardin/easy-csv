@@ -10,9 +10,9 @@ parse CSV fields to the datatype of the field in your struct.
 
 ```toml
 [dependencies]
-easy-csv = "0.2.0"
-easy-csv-derive = "0.2.0"
-csv = "0.14.0"
+easy-csv = "0.3.2"
+easy-csv-derive = "0.3.2"
+csv = "0.15"
 ```
 
 `csv` is a sibling dependency because you have to create the `csv::Reader` yourself.

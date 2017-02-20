@@ -48,16 +48,3 @@ impl<'a, T, R> Iterator for CSVIterator<'a, T, R> where T: CSVParsable<T>, R: st
         T::parse_row(&mut self.records, &self.col_indices)
     }
 }
-
-#[test]
-fn test() {
-    #[derive(Debug,CSVParsable,PartialEq)]
-    struct Record {
-        a: u32,
-        b: i32
-    }
-    let mut rdr = csv::Reader::from_file("./test_input/test.csv").unwrap();
-    let iter = CSVIterator::<Record,_>::new(&mut rdr).unwrap();
-    let res : Vec<Record> = iter.map(|r| { r.unwrap() }).collect();
-    assert_eq!(res, vec![Record { a: 2, b: -3 }]);
-}
