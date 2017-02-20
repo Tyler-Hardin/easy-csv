@@ -1,6 +1,6 @@
 [package]
 name = "easy-csv"
-version = "0.2.1"
+version = "0.3.0"
 authors = ["Tyler Hardin <th020394@gmail.com>"]
 
 description = "Easily parse structs from CSVs."
@@ -11,5 +11,5 @@ repository = "https://github.com/Tyler-Hardin/easy-csv"
 name = "easy_csv"
 
 [dependencies]
-easy-csv-derive = "0.2.0"
+easy-csv-derive = "0.3.0"
 csv = "0.15"

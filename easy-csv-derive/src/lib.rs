@@ -30,51 +30,66 @@ fn impl_easy_csv(ast: &syn::MacroInput) -> quote::Tokens {
 
 	let mut header_parser = Vec::new();
 	let mut row_parser = Vec::new();
-    let mut idx : usize = 0;
-	for i in fields {
+	for (idx, field) in fields.iter().enumerate() {
+        let name = field.ident.clone().expect("Fields must be named");
         header_parser.push({
-            let name = i.ident.clone().expect("Fields must be named");
             quote! {
                 let mut index = None;
-                for (i, col) in reader.headers().unwrap().iter().enumerate() {
+                let headers = try!(reader.headers());
+                for (i, col) in headers.iter().enumerate() {
                     if col == stringify!(#name) {
                         index = Some(i);
                     }
                 }
-                let index = index.expect(format!("Column \"{}\" not found", "").as_str());
+                let index = match index {
+                    Some(index) => index,
+                    None => {
+                        return Err(::Error::MissingColumnError(
+                            format!("Column \"{}\" not found", stringify!(#name))));
+                    }
+                };
                 column_indices.push(index);
             }
         });
 
 
 		row_parser.push({
-            let name = i.ident.clone().expect("Fields must be named");
-            let ty = i.ty.clone();
+            let ty = field.ty.clone();
             quote! {
-                #name : record[col_indices[#idx]].parse::<#ty>().unwrap()
+                #name : match record[col_indices[#idx]].parse::<#ty>() {
+                    Ok(v) => v,
+                    Err(_) => {
+                        return Some(Err(::Error::ParseError(
+                            format!("Error parsing column \"{}\" on row {}",
+                                stringify!(#name),
+                                row))));
+                    }
+                }
             }
         });
-        idx += 1;
 	}
 
 	let (impl_generics, ty_generics, where_clause) = ast.generics.split_for_impl();
 
     quote! {
         impl #impl_generics CSVParsable<#name> for #name #ty_generics #where_clause {
-			fn parse_header<R: std::io::Read>(reader: &mut csv::Reader<R>) -> Vec<usize> {
+			fn parse_header<R: std::io::Read>(
+                reader: &mut csv::Reader<R>) -> Result<Vec<usize>, ::Error> {
                 let mut column_indices = vec![];
                 #(#header_parser)*
-                column_indices
+                Ok(column_indices)
 			}
 
             fn parse_row<R: std::io::Read>(
-                records: &mut csv::StringRecords<R>, 
-                col_indices: &Vec<usize>) -> Option<#name> {
+                records: &mut std::iter::Enumerate<csv::StringRecords<R>>,
+                col_indices: &Vec<usize>) -> Option<Result<#name,::Error>> {
                 let record = records.next();
                 match record {
-                    Some(record) => {
-                        let record = record.unwrap();
-                        Some(#name { #(#row_parser),* })
+                    Some((row, record)) => {
+                        match record {
+                            Ok(record) => Some(Ok(#name { #(#row_parser),* })),
+                            Err(e) => Some(Err(::Error::CSVError(e)))
+                        }
                     }
                     None => None
                 }
